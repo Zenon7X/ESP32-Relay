@@ -5,122 +5,70 @@
   <title>ESP32 LED Control Dashboard</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    body { font-family: Arial, sans-serif; text-align: center; background-color: #f9f9f9; margin: 0; padding: 0 10px 40px; display: flex; flex-direction: column; min-height: 100vh; }
-    h1 { margin-top: 30px; font-size: 1.8rem; }
-    .relay-container { max-width: 960px; margin: 20px auto; display: flex; flex-wrap: wrap; justify-content: center; }
-    .relay-card { background-color: white; padding: 20px; margin: 15px; border-radius: 15px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); width: 220px; }
-    .relay-card button { padding: 10px 20px; border: none; border-radius: 10px; color: white; background-color: blue; cursor: pointer; font-size: 16px; width: 90%; transition: 0.3s; }
-    #allOffBtn { background-color: #d32f2f; color: white; max-width: 300px; width: 90%; padding: 12px; border-radius: 10px; border: none; cursor: pointer; margin: 10px auto; display: block; }
-    #logoutBtn { background-color: #555; color: white; max-width: 300px; width: 90%; padding: 12px; border-radius: 10px; border: none; cursor: pointer; margin: 10px auto; display: block; }
-    #loginForm { max-width: 400px; margin: 80px auto; background: white; padding: 30px 20px; border-radius: 15px; box-shadow: 0 4px 12px rgba(0,0,0,0.15); }
-    #loginForm input { width: 100%; padding: 12px; margin: 10px 0; border-radius: 10px; border: 1.5px solid #ccc; box-sizing: border-box; }
-    #loginForm button { width: 100%; background-color: #1e88e5; color: white; padding: 12px; border: none; border-radius: 10px; cursor: pointer; }
+    body { font-family: Arial, sans-serif; text-align: center; background-color: #f9f9f9; margin: 0; padding: 20px; }
+    .relay-container { display: flex; flex-wrap: wrap; justify-content: center; max-width: 900px; margin: auto; }
+    .card { background: white; padding: 20px; margin: 10px; border-radius: 15px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); width: 200px; }
+    button { padding: 10px; width: 100%; border-radius: 8px; border: none; color: white; cursor: pointer; font-size: 16px; transition: 0.3s; }
+    .btn-toggle { background-color: #444; }
+    #allOffBtn { background-color: #d32f2f; margin-top: 20px; max-width: 250px; }
+    #loginForm { max-width: 350px; margin: 100px auto; background: white; padding: 20px; border-radius: 10px; box-shadow: 0 4px 10px rgba(0,0,0,0.1); }
+    #loginForm input { width: 90%; padding: 10px; margin: 10px 0; border-radius: 5px; border: 1px solid #ccc; }
     #dashboard { display: none; }
-    @media (max-width: 700px) { .relay-card { width: 90%; margin: 10px auto; } }
-    footer { margin-top: auto; padding: 20px; color: #666; }
   </style>
 </head>
 <body>
-
-  <h1>ESP32 LED Control Dashboard</h1>
-
+  <h1>LED Control Dashboard</h1>
   <div id="loginForm">
-    <input type="email" id="email" placeholder="Enter Email" required />
-    <input type="password" id="password" placeholder="Enter Password" required />
-    <button id="loginBtn">Login</button>
+    <input type="email" id="email" placeholder="Email" />
+    <input type="password" id="password" placeholder="Password" />
+    <button style="background-color: #1e88e5;" onclick="login()">Login</button>
   </div>
-
   <div id="dashboard">
     <div class="relay-container">
-      <div class="relay-card">
-        <h2>LED 1</h2>
-        <p>Status: <span id="status1">Loading...</span></p>
-        <button id="btn1">Toggle</button>
-      </div>
-      <div class="relay-card">
-        <h2>LED 2</h2>
-        <p>Status: <span id="status2">Loading...</span></p>
-        <button id="btn2">Toggle</button>
-      </div>
-      <div class="relay-card">
-        <h2>LED 3</h2>
-        <p>Status: <span id="status3">Loading...</span></p>
-        <button id="btn3">Toggle</button>
-      </div>
-      <div class="relay-card">
-        <h2>LED 4</h2>
-        <p>Status: <span id="status4">Loading...</span></p>
-        <button id="btn4">Toggle</button>
-      </div>
+      <div class="card"><h2>LED 1</h2><p id="s1">OFF</p><button id="b1" class="btn-toggle">Toggle</button></div>
+      <div class="card"><h2>LED 2</h2><p id="s2">OFF</p><button id="b2" class="btn-toggle">Toggle</button></div>
+      <div class="card"><h2>LED 3</h2><p id="s3">OFF</p><button id="b3" class="btn-toggle">Toggle</button></div>
+      <div class="card"><h2>LED 4</h2><p id="s4">OFF</p><button id="b4" class="btn-toggle">Toggle</button></div>
     </div>
     <button id="allOffBtn">All LED OFF</button>
-    <button id="logoutBtn">Logout</button>
+    <button style="background-color: #555; margin-top:10px; max-width:250px;" onclick="location.reload()">Logout</button>
   </div>
-
-  <footer>Created by Tech StudyCell</footer>
 
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-app-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-database-compat.js"></script>
   <script src="https://www.gstatic.com/firebasejs/9.6.10/firebase-auth-compat.js"></script>
-
   <script>
-    const firebaseConfig = {
+    const config = {
       apiKey: "AIzaSyCV5KgFgBUCsayYtlLE1QFzelcUCP92fa4",
       authDomain: "esp32-irsensor-01.firebaseapp.com",
       databaseURL: "https://esp32-irsensor-01-default-rtdb.asia-southeast1.firebasedatabase.app",
-      projectId: "esp32-irsensor-01",
-      storageBucket: "esp32-irsensor-01.firebasestorage.app",
-      messagingSenderId: "914161303934",
-      appId: "1:914161303934:web:deafc0d6abe32d9368332f"
+      projectId: "esp32-irsensor-01"
     };
+    firebase.initializeApp(config);
+    const db = firebase.database();
 
-    firebase.initializeApp(firebaseConfig);
-
-    const loginForm = document.getElementById("loginForm");
-    const dashboard = document.getElementById("dashboard");
-
-    document.getElementById("loginBtn").onclick = () => {
-      const email = document.getElementById("email").value;
-      const password = document.getElementById("password").value;
-      firebase.auth().signInWithEmailAndPassword(email, password)
-        .then(() => {
-          loginForm.style.display = "none";
-          dashboard.style.display = "block";
-          startControl();
-        }).catch(err => alert(err.message));
-    };
-
-    function startControl() {
-      const db = firebase.database();
-      const nodes = ["relay1", "relay2", "relay3", "relay4"];
-
-      nodes.forEach((path, index) => {
-        const id = index + 1;
-        const statusText = document.getElementById(`status${id}`);
-        const btn = document.getElementById(`btn${id}`);
-        const ref = db.ref("/" + path);
-
-        ref.on("value", (snap) => {
-          const val = snap.val();
-          // Logic: false = ไฟติด (แสดง ON), true = ไฟดับ (แสดง OFF)
-          statusText.innerText = val ? "OFF" : "ON";
-          btn.style.backgroundColor = val ? "blue" : "green";
-        });
-
-        btn.onclick = () => {
-          ref.get().then(snap => ref.set(!snap.val()));
-        };
-      });
-
-      // ปุ่ม All OFF คือส่งค่า true (ดับไฟ) ไปทุกดวง
-      document.getElementById("allOffBtn").onclick = () => {
-        nodes.forEach(path => db.ref("/" + path).set(true));
-      };
+    function login() {
+      const e = document.getElementById("email").value;
+      const p = document.getElementById("password").value;
+      firebase.auth().signInWithEmailAndPassword(e, p).then(() => {
+        document.getElementById("loginForm").style.display = "none";
+        document.getElementById("dashboard").style.display = "block";
+        init();
+      }).catch(err => alert(err.message));
     }
 
-    document.getElementById("logoutBtn").onclick = () => {
-      firebase.auth().signOut().then(() => location.reload());
-    };
+    function init() {
+      [1, 2, 3, 4].forEach(id => {
+        const ref = db.ref("/relay" + id);
+        ref.on("value", snap => {
+          const val = snap.val();
+          document.getElementById("s" + id).innerText = val ? "ON" : "OFF";
+          document.getElementById("b" + id).style.backgroundColor = val ? "green" : "#444";
+        });
+        document.getElementById("b" + id).onclick = () => ref.get().then(s => ref.set(!s.val()));
+      });
+      document.getElementById("allOffBtn").onclick = () => [1, 2, 3, 4].forEach(id => db.ref("/relay" + id).set(false));
+    }
   </script>
 </body>
 </html>
